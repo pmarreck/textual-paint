@@ -14,7 +14,13 @@ from textual_paint.paint import PaintApp
 async def test_char_input_paste():
     app = PaintApp()
     async with app.run_test() as pilot:  # type: ignore
+        # Wait for app to be ready
+        await pilot.pause()
+        
         char_input = app.query_one(CharInput)
+        # Ensure widget is mounted
+        assert char_input.is_mounted
+        
         char_input.post_message(Paste("Hello, world!"))
         await pilot.pause()
         assert char_input.value == "!"
@@ -41,4 +47,3 @@ async def test_file_drag_and_drop(my_fs: FakeFilesystem):
         # It should ONLY load the file in this case, not also paste the filename into the char input.
         # assert char_input.value == " " # default, may become full block (█) in the future
         assert app.query_one("Canvas").render_line(0).text == "Hello, world!"
-

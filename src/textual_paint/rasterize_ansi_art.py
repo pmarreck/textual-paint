@@ -77,7 +77,8 @@ if not font:
 
 ch_width: int
 ch_height: int
-ch_width, ch_height = font.getsize('A')  # type: ignore
+bbox = font.getbbox('A')  # type: ignore
+ch_width, ch_height = bbox[2] - bbox[0], bbox[3] - bbox[1]  # Width and height from bounding box
 assert isinstance(ch_width, int), "ch_width is not an int, but a " + str(type(ch_width))  # type: ignore
 assert isinstance(ch_height, int), "ch_height is not an int, but a " + str(type(ch_height))  # type: ignore
 

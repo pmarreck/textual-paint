@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+# Get the directory where this script lives
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Change to the script directory
+cd "$SCRIPT_DIR"
+
+# Check if nix is available
+if command -v nix &> /dev/null; then
+    # Run with nix
+    nix develop --command bash -c "PYTHONPATH=src python -m src.textual_paint.paint"
+else
+    # Run without nix
+    PYTHONPATH=src python -m src.textual_paint.paint
+fi

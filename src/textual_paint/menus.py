@@ -17,9 +17,14 @@ from textual_paint.localization.i18n import get_direction, get_hotkey, markup_ho
 
 def to_snake_case(name: str) -> str:
     """Convert a name to snake_case, for use as an ID."""
+    # First remove any hotkey markers (&)
+    name = name.replace('&', '')
+    # Convert to snake case
     name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
     name = re.sub('__([A-Z])', r'_\1', name)
     name = re.sub('([a-z0-9])([A-Z])', r'\1_\2', name)
+    # Replace any remaining non-alphanumeric chars with underscores
+    name = re.sub('[^a-zA-Z0-9]', '_', name)
     return name.lower()
 
 class Menu(Container):
@@ -46,26 +51,37 @@ class Menu(Container):
 
     def mount_items(self) -> None:
         """Mount the menu items."""
+        # If we're not mounted yet, we'll mount items when we are mounted
+        if not self.is_mounted:
+            return
         for item in self.items:
             self.mount(item)
             if item.submenu:
-                self.screen.mount(item.submenu)
-                item.submenu.close()
+                try:
+                    self.screen.mount(item.submenu)
+                    item.submenu.close()
+                except NoScreen:
+                    # This can happen during initialization, we'll handle it in on_mount
+                    pass
             if isinstance(item, MenuItem):
                 item.parent_menu = self
+
+    def compose(self) -> None:
+        """Called when the widget is ready to be composed."""
+        # This is called before on_mount and ensures we're properly attached to a screen
+        yield from ()
+
+    def on_mount(self) -> None:
+        """Called when the menu is mounted."""
+        self.mount_items()
 
     def watch_items(self, old_items: list['MenuItem|Separator'], new_items: list['MenuItem|Separator']) -> None:
         """Update the menu items."""
         for item in old_items:
             item.remove()
-        try:
+        if self.is_mounted:
             self.mount_items()
-        except NoScreen:
-            pass
-
-    def on_mount(self) -> None:
-        """Called when the menu is mounted."""
-        self.mount_items()
+        # If not mounted, items will be mounted when the menu is mounted via on_mount
 
     def on_key(self, event: events.Key) -> None:
         """Called when the user presses a key."""
